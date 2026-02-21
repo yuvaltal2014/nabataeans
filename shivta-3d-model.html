@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שבטה בתלת־ממד</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Crimson+Text:ital@0;1&display=swap');
+
+        body {
+            font-family: 'Crimson Text', serif;
+            background: #17130f;
+            color: #efe3d1;
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .ui-panel {
+            position: absolute;
+            background: rgba(17, 14, 11, 0.9);
+            border: 1px solid rgba(210, 175, 120, 0.6);
+            padding: 18px 20px;
+            font-size: 0.9em;
+            color: #efe3d1;
+            border-radius: 6px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+        }
+
+        .title-panel {
+            top: 18px;
+            left: 18px;
+            max-width: 360px;
+        }
+
+        .title-panel h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7em;
+            color: #f1b36c;
+            margin-bottom: 8px;
+        }
+
+        .title-panel p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #d8b07b;
+        }
+
+        .info-panel {
+            bottom: 18px;
+            left: 18px;
+            max-width: 420px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .info-panel h3 {
+            font-family: 'Playfair Display', serif;
+            color: #f1b36c;
+            margin-bottom: 10px;
+            font-size: 1.15em;
+        }
+
+        .info-panel p {
+            font-size: 0.85em;
+            line-height: 1.5;
+            color: #efe3d1;
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            bottom: 18px;
+            right: 18px;
+            max-width: 300px;
+        }
+
+        .controls h3 {
+            font-family: 'Playfair Display', serif;
+            color: #f1b36c;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .controls p {
+            font-size: 0.85em;
+            line-height: 1.5;
+            color: #d8b07b;
+            margin-bottom: 6px;
+        }
+
+        .controls button {
+            margin-top: 10px;
+            padding: 8px 14px;
+            border: 1px solid rgba(210, 175, 120, 0.6);
+            background: rgba(241, 179, 108, 0.12);
+            color: #f7d9a8;
+            font-family: 'Crimson Text', serif;
+            cursor: pointer;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1em;
+            color: #f1b36c;
+            text-align: center;
+            background: rgba(17, 14, 11, 0.9);
+            padding: 18px 26px;
+            border-radius: 6px;
+            border: 1px solid rgba(210, 175, 120, 0.6);
+        }
+
+        .info-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .info-panel::-webkit-scrollbar-track {
+            background: rgba(196, 160, 98, 0.1);
+        }
+
+        .info-panel::-webkit-scrollbar-thumb {
+            background: #c4a062;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading" class="loading">טוען שחזור תלת־ממדי של שבטה...</div>
+    <canvas id="canvas"></canvas>
+
+    <div class="ui-panel title-panel">
+        <h1>שבטה במרחב המדבר</h1>
+        <p>שחזור מרחבי של שבטה הביזנטית — כנסיות, כיכרות ובתי חצר על רקע נוף הנגב.</p>
+        <p style="margin-top: 12px; font-size: 0.85em; color: #c89a61;">לחצו על מבנים למידע | סובבו בעכבר | זום בגלגלת</p>
+    </div>
+
+    <div class="ui-panel info-panel" id="infoPanel">
+        <h3>בחרו מבנה</h3>
+        <p>לחצו על כנסייה, כיכר או מבנה כדי להציג מידע היסטורי</p>
+    </div>
+
+    <div class="ui-panel controls">
+        <h3>ניווט</h3>
+        <p><strong>סובב:</strong> גרירה עם כפתור שמאל</p>
+        <p><strong>זום:</strong> גלגלת עכבר</p>
+        <p><strong>לחיצה:</strong> על מבנים למידע</p>
+        <p><strong>הליכה:</strong> WASD (מצב הליכה)</p>
+        <button id="walkToggle">מעבר למצב הליכה</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/PointerLockControls.js"></script>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xd7c7a6);
+        scene.fog = new THREE.Fog(0xd7c7a6, 140, 620);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1400);
+        camera.position.set(15, 7, 70);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.9;
+        renderer.physicallyCorrectLights = true;
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, 4, 0);
+        controls.maxPolarAngle = Math.PI * 0.48;
+
+        const walkControls = new THREE.PointerLockControls(camera, document.body);
+        let walkMode = false;
+
+        const walkToggle = document.getElementById('walkToggle');
+        walkToggle.addEventListener('click', () => {
+            if (!walkMode) {
+                walkControls.lock();
+            } else {
+                walkControls.unlock();
+            }
+        });
+
+        walkControls.addEventListener('lock', () => {
+            walkMode = true;
+            controls.enabled = false;
+            walkToggle.textContent = 'חזרה למצב סיבוב';
+        });
+
+        walkControls.addEventListener('unlock', () => {
+            walkMode = false;
+            controls.enabled = true;
+            walkToggle.textContent = 'מעבר למצב הליכה';
+        });
+
+        const keyState = { w: false, a: false, s: false, d: false };
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyW') keyState.w = true;
+            if (e.code === 'KeyA') keyState.a = true;
+            if (e.code === 'KeyS') keyState.s = true;
+            if (e.code === 'KeyD') keyState.d = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW') keyState.w = false;
+            if (e.code === 'KeyA') keyState.a = false;
+            if (e.code === 'KeyS') keyState.s = false;
+            if (e.code === 'KeyD') keyState.d = false;
+        });
+
+        const loading = document.getElementById('loading');
+        const manager = new THREE.LoadingManager(() => {
+            loading.style.display = 'none';
+        });
+
+        const loader = new THREE.TextureLoader(manager);
+        const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        function loadTextureSet(basePath) {
+            const diff = loader.load(`${basePath}_diff_2k.jpg`);
+            const normal = loader.load(`${basePath}_nor_gl_2k.jpg`);
+            const rough = loader.load(`${basePath}_rough_2k.jpg`);
+            diff.wrapS = diff.wrapT = THREE.RepeatWrapping;
+            normal.wrapS = normal.wrapT = THREE.RepeatWrapping;
+            rough.wrapS = rough.wrapT = THREE.RepeatWrapping;
+            diff.anisotropy = normal.anisotropy = rough.anisotropy = maxAnisotropy;
+            diff.encoding = THREE.sRGBEncoding;
+            return { diff, normal, rough };
+        }
+
+        const sand = loadTextureSet('https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_sand/aerial_sand');
+        const stoneBlocks = loadTextureSet('https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/sandstone_blocks_05/sandstone_blocks_05');
+        const oldStone = loadTextureSet('https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/old_sandstone_02/old_sandstone_02');
+
+        sand.diff.repeat.set(20, 20);
+        sand.normal.repeat.set(20, 20);
+        sand.rough.repeat.set(20, 20);
+
+        stoneBlocks.diff.repeat.set(2, 2);
+        stoneBlocks.normal.repeat.set(2, 2);
+        stoneBlocks.rough.repeat.set(2, 2);
+
+        oldStone.diff.repeat.set(3, 3);
+        oldStone.normal.repeat.set(3, 3);
+        oldStone.rough.repeat.set(3, 3);
+
+        function makeStoneMaterial(textureSet, tint) {
+            return new THREE.MeshStandardMaterial({
+                color: tint || 0xffffff,
+                map: textureSet.diff,
+                normalMap: textureSet.normal,
+                roughnessMap: textureSet.rough,
+                roughness: 1.0,
+                metalness: 0.0
+            });
+        }
+
+        scene.add(new THREE.HemisphereLight(0xfff2d0, 0x5c4a35, 0.65));
+        const sun = new THREE.DirectionalLight(0xffe0b2, 2.1);
+        sun.position.set(120, 150, 40);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        sun.shadow.camera.near = 50;
+        sun.shadow.camera.far = 500;
+        sun.shadow.camera.left = -160;
+        sun.shadow.camera.right = 160;
+        sun.shadow.camera.top = 160;
+        sun.shadow.camera.bottom = -160;
+        scene.add(sun);
+
+        function createSkyDome() {
+            const skyGeo = new THREE.SphereGeometry(600, 32, 32);
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+            gradient.addColorStop(0, '#cbb08a');
+            gradient.addColorStop(0.55, '#dcc7a4');
+            gradient.addColorStop(1, '#f0e3cf');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const skyMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+            const sky = new THREE.Mesh(skyGeo, skyMat);
+            scene.add(sky);
+        }
+
+        createSkyDome();
+
+        const groundGeo = new THREE.PlaneGeometry(520, 520, 200, 200);
+        const groundPos = groundGeo.attributes.position;
+        for (let i = 0; i < groundPos.count; i++) {
+            const x = groundPos.getX(i);
+            const y = groundPos.getY(i);
+            const height = (Math.sin(x * 0.04) + Math.cos(y * 0.045)) * 0.55 + (Math.sin((x + y) * 0.06) * 0.35);
+            groundPos.setZ(i, height);
+        }
+        groundGeo.computeVertexNormals();
+
+        const ground = new THREE.Mesh(
+            groundGeo,
+            new THREE.MeshStandardMaterial({
+                map: sand.diff,
+                normalMap: sand.normal,
+                roughnessMap: sand.rough,
+                roughness: 1.0,
+                metalness: 0.0
+            })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        function makePathTexture() {
+            const size = 1024;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.strokeStyle = '#6b553a';
+            ctx.lineWidth = 30;
+            ctx.globalAlpha = 0.35;
+            ctx.beginPath();
+            ctx.moveTo(120, 80);
+            ctx.lineTo(900, 180);
+            ctx.lineTo(980, 540);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(160, 880);
+            ctx.lineTo(760, 620);
+            ctx.stroke();
+            ctx.globalAlpha = 0.45;
+            ctx.fillStyle = '#7a6044';
+            ctx.fillRect(380, 420, 180, 150);
+            ctx.fillRect(160, 520, 120, 100);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+            return texture;
+        }
+
+        const pathTexture = makePathTexture();
+        const pathOverlay = new THREE.Mesh(
+            new THREE.PlaneGeometry(520, 520),
+            new THREE.MeshStandardMaterial({
+                map: pathTexture,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.MultiplyBlending,
+                roughness: 1.0,
+                metalness: 0.0
+            })
+        );
+        pathOverlay.rotation.x = -Math.PI / 2;
+        pathOverlay.position.y = 0.12;
+        scene.add(pathOverlay);
+
+        const clickable = [];
+
+        function addRuinVariation(mesh) {
+            mesh.scale.y *= 0.85 + Math.random() * 0.25;
+            mesh.rotation.y += (Math.random() - 0.5) * 0.08;
+        }
+
+        function createBasilica({ name, info, x, z, width, length, height, material }) {
+            const group = new THREE.Group();
+
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(width, height, length),
+                material
+            );
+            base.castShadow = true;
+            base.receiveShadow = true;
+            addRuinVariation(base);
+            group.add(base);
+
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(width * 0.6, height * 0.6, 4),
+                new THREE.MeshStandardMaterial({ color: 0x8a7456, roughness: 1 })
+            );
+            roof.rotation.y = Math.PI / 4;
+            roof.position.y = height * 0.7;
+            roof.castShadow = true;
+            group.add(roof);
+
+            const columnMaterial = new THREE.MeshStandardMaterial({ color: 0xe0c9a6, roughness: 0.9 });
+            for (let i = -2; i <= 2; i++) {
+                const column = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, height * 0.7, 12), columnMaterial);
+                column.position.set(i * (width / 6), height * 0.2, length * 0.32);
+                column.castShadow = true;
+                group.add(column);
+            }
+
+            const apse = new THREE.Mesh(
+                new THREE.CylinderGeometry(width * 0.35, width * 0.35, height * 0.8, 20, 1, false, 0, Math.PI),
+                material
+            );
+            apse.rotation.y = Math.PI / 2;
+            apse.position.set(0, height * 0.1, -length * 0.45);
+            apse.castShadow = true;
+            group.add(apse);
+
+            group.position.set(x, height * 0.5, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+            return group;
+        }
+
+        function createCourtyardHouse({ name, info, x, z, size, height, material }) {
+            const group = new THREE.Group();
+            const wallThickness = 0.8;
+            const half = size / 2;
+            const wallHeight = height;
+
+            const wallGeo = new THREE.BoxGeometry(size, wallHeight, wallThickness);
+            const wallGeoSide = new THREE.BoxGeometry(wallThickness, wallHeight, size);
+
+            const north = new THREE.Mesh(wallGeo, material);
+            north.position.set(0, wallHeight * 0.5, -half);
+            const south = new THREE.Mesh(wallGeo, material);
+            south.position.set(0, wallHeight * 0.5, half);
+            const east = new THREE.Mesh(wallGeoSide, material);
+            east.position.set(half, wallHeight * 0.5, 0);
+            const west = new THREE.Mesh(wallGeoSide, material);
+            west.position.set(-half, wallHeight * 0.5, 0);
+
+            [north, south, east, west].forEach((wall) => {
+                addRuinVariation(wall);
+                wall.castShadow = true;
+                wall.receiveShadow = true;
+                group.add(wall);
+            });
+
+            const roof = new THREE.Mesh(
+                new THREE.BoxGeometry(size * 0.9, 0.6, size * 0.9),
+                new THREE.MeshStandardMaterial({ color: 0x9c815e, roughness: 1 })
+            );
+            roof.position.y = wallHeight + 0.3;
+            roof.castShadow = true;
+            group.add(roof);
+
+            const courtyard = new THREE.Mesh(
+                new THREE.PlaneGeometry(size * 0.7, size * 0.7),
+                new THREE.MeshStandardMaterial({ color: 0xd7c1a1, roughness: 1 })
+            );
+            courtyard.rotation.x = -Math.PI / 2;
+            courtyard.position.y = 0.05;
+            group.add(courtyard);
+
+            group.position.set(x, 0, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+        }
+
+        function createTower({ name, info, x, z, height, material }) {
+            const group = new THREE.Group();
+            const tower = new THREE.Mesh(new THREE.BoxGeometry(6, height, 6), material);
+            tower.position.y = height * 0.5;
+            tower.castShadow = true;
+            group.add(tower);
+
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(6.5, 1, 6.5),
+                new THREE.MeshStandardMaterial({ color: 0xb59c79, roughness: 1 })
+            );
+            top.position.y = height + 0.5;
+            group.add(top);
+
+            group.position.set(x, 0, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+        }
+
+        function createPool({ name, info, x, z }) {
+            const group = new THREE.Group();
+            const basin = new THREE.Mesh(
+                new THREE.BoxGeometry(20, 3, 12),
+                makeStoneMaterial(oldStone, 0xf0d9ba)
+            );
+            basin.position.y = 1.5;
+            basin.castShadow = true;
+            basin.receiveShadow = true;
+            group.add(basin);
+
+            const water = new THREE.Mesh(
+                new THREE.PlaneGeometry(18, 10),
+                new THREE.MeshStandardMaterial({
+                    color: 0x678f9b,
+                    roughness: 0.25,
+                    metalness: 0.1,
+                    transparent: true,
+                    opacity: 0.7
+                })
+            );
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = 2.2;
+            group.add(water);
+
+            group.position.set(x, 0, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+        }
+
+        function createPoolSquare({ x, z }) {
+            const square = new THREE.Mesh(
+                new THREE.PlaneGeometry(70, 42),
+                makeStoneMaterial(stoneBlocks, 0xf1d4ad)
+            );
+            square.rotation.x = -Math.PI / 2;
+            square.position.set(x, 0.06, z);
+            square.receiveShadow = true;
+            scene.add(square);
+
+            createPool({
+                name: 'בריכת המים הדרומית',
+                info: 'בריכה ציבורית ששימשה אגירת מים עונתית והוזנה בתעלות ואמות מים.',
+                x: x - 10,
+                z: z + 2
+            });
+
+            createPool({
+                name: 'בריכת המים הצפונית',
+                info: 'בריכת אגירה נוספת בכיכר הבריכות, סמוכה לכנסייה הדרומית.',
+                x: x + 12,
+                z: z - 4
+            });
+        }
+
+        function createCistern({ x, z }) {
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.2, 2.4, 0.6, 20),
+                new THREE.MeshStandardMaterial({ color: 0xdcc1a0, roughness: 1 })
+            );
+            rim.position.set(x, 0.3, z);
+            rim.castShadow = true;
+            scene.add(rim);
+
+            const hole = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.6, 1.6, 0.4, 20),
+                new THREE.MeshStandardMaterial({ color: 0x2b221a })
+            );
+            hole.position.set(x, 0.1, z);
+            scene.add(hole);
+        }
+
+        function createColumbarium({ name, info, x, z }) {
+            const group = new THREE.Group();
+            const tower = new THREE.Mesh(
+                new THREE.CylinderGeometry(5, 6, 10, 18),
+                makeStoneMaterial(oldStone, 0xf2d6b0)
+            );
+            tower.position.y = 5;
+            tower.castShadow = true;
+            group.add(tower);
+
+            const cap = new THREE.Mesh(
+                new THREE.ConeGeometry(6.5, 3, 18),
+                new THREE.MeshStandardMaterial({ color: 0xb79a74, roughness: 1 })
+            );
+            cap.position.y = 11.5;
+            group.add(cap);
+
+            group.position.set(x, 0, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+        }
+
+        function createGate({ name, info, x, z }) {
+            const group = new THREE.Group();
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 3), makeStoneMaterial(stoneBlocks, 0xf5d9b1));
+            wall.position.y = 3.5;
+            wall.castShadow = true;
+            group.add(wall);
+
+            const opening = new THREE.Mesh(new THREE.BoxGeometry(6, 5, 3.2), new THREE.MeshStandardMaterial({ color: 0x6b4f34 }));
+            opening.position.y = 2.5;
+            group.add(opening);
+
+            group.position.set(x, 0, z);
+            group.userData = { name, info };
+            scene.add(group);
+            clickable.push(group);
+        }
+
+        function createAqueductChannel(start, end) {
+            const length = start.distanceTo(end);
+            const channel = new THREE.Mesh(
+                new THREE.BoxGeometry(length, 0.6, 1.2),
+                new THREE.MeshStandardMaterial({ color: 0xd6b98f, roughness: 1 })
+            );
+            channel.position.copy(start).lerp(end, 0.5);
+            channel.rotation.y = Math.atan2(end.z - start.z, end.x - start.x);
+            channel.castShadow = true;
+            scene.add(channel);
+        }
+
+        function scatterRubble(count, area, material) {
+            const geometry = new THREE.DodecahedronGeometry(0.6, 0);
+            const instanced = new THREE.InstancedMesh(geometry, material, count);
+            const dummy = new THREE.Object3D();
+            for (let i = 0; i < count; i++) {
+                dummy.position.set(
+                    (Math.random() - 0.5) * area,
+                    0.4 + Math.random() * 0.6,
+                    (Math.random() - 0.5) * area
+                );
+                const scale = 0.6 + Math.random() * 1.2;
+                dummy.scale.set(scale, scale, scale);
+                dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                dummy.updateMatrix();
+                instanced.setMatrixAt(i, dummy.matrix);
+            }
+            instanced.castShadow = true;
+            instanced.receiveShadow = true;
+            scene.add(instanced);
+        }
+
+        function createPerimeterHouses() {
+            const houseGeo = new THREE.BoxGeometry(6, 4, 8);
+            const houseMat = makeStoneMaterial(oldStone, 0xf0d2aa);
+            const count = 64;
+            const instanced = new THREE.InstancedMesh(houseGeo, houseMat, count);
+            const dummy = new THREE.Object3D();
+            const radiusX = 110;
+            const radiusZ = 90;
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const x = Math.cos(angle) * radiusX + (Math.random() - 0.5) * 6;
+                const z = Math.sin(angle) * radiusZ + (Math.random() - 0.5) * 6;
+                dummy.position.set(x, 2, z);
+                dummy.rotation.y = angle + Math.PI / 2;
+                const scaleY = 0.7 + Math.random() * 0.6;
+                dummy.scale.set(1, scaleY, 1);
+                dummy.updateMatrix();
+                instanced.setMatrixAt(i, dummy.matrix);
+            }
+            instanced.castShadow = true;
+            instanced.receiveShadow = true;
+            scene.add(instanced);
+        }
+
+        createPerimeterHouses();
+
+        const northChurch = createBasilica({
+            name: 'הכנסייה הצפונית',
+            info: 'בזיליקה מרשימה עם אטריום ומנזר סמוך. קירותיה השתמרו לגובה רב והיו מצופים שיש.',
+            x: -24,
+            z: -60,
+            width: 24,
+            length: 32,
+            height: 12,
+            material: makeStoneMaterial(stoneBlocks, 0xf5d9b1)
+        });
+
+        const southChurch = createBasilica({
+            name: 'הכנסייה הדרומית',
+            info: 'כנסייה ביזנטית בעלת אולם תפילה בסגנון בזיליקה, עם שני מעברים צדדיים ואפסיסים מאוחרים.',
+            x: 26,
+            z: 26,
+            width: 20,
+            length: 26,
+            height: 10,
+            material: makeStoneMaterial(oldStone, 0xf0d0a2)
+        });
+
+        const centralChurch = createBasilica({
+            name: 'הכנסייה המרכזית',
+            info: 'כנסייה קטנה יותר המשולבת באזור מגורים, עם פתחים רבים לרחובות הסמוכים.',
+            x: 2,
+            z: -10,
+            width: 15,
+            length: 18,
+            height: 7.5,
+            material: makeStoneMaterial(oldStone, 0xeecfa1)
+        });
+
+        createCourtyardHouse({
+            name: 'בית חצר',
+            info: 'בתי מגורים טיפוסיים סביב חצר פנימית, עם קירות עבים לאקלים המדברי.',
+            x: -38,
+            z: 6,
+            size: 18,
+            height: 5.5,
+            material: makeStoneMaterial(oldStone, 0xf1d5ad)
+        });
+
+        createCourtyardHouse({
+            name: 'בית האורווה',
+            info: 'מבנה מגורים גדול ששימש גם ללינת בעלי חיים, עם אבוסים משולבים בקירות.',
+            x: -10,
+            z: 30,
+            size: 22,
+            height: 6,
+            material: makeStoneMaterial(oldStone, 0xf0d1a4)
+        });
+
+        createCourtyardHouse({
+            name: 'בית הבריכה',
+            info: 'בית סמוך לבריכות הציבוריות עם קירות מסותתים בקפידה ובור אגירה בחצר.',
+            x: 18,
+            z: -22,
+            size: 15,
+            height: 5.5,
+            material: makeStoneMaterial(stoneBlocks, 0xf6dcb6)
+        });
+
+        createPoolSquare({ x: 0, z: 42 });
+
+        createTower({
+            name: 'בית המושל',
+            info: 'מבנה פרטי עם מגדל גבוה, ששימש כסימן סטטוס ונקודת תצפית בתוך העיר.',
+            x: -8,
+            z: -36,
+            height: 12,
+            material: makeStoneMaterial(stoneBlocks, 0xf4d5aa)
+        });
+
+        createGate({
+            name: 'השער המערבי',
+            info: 'כניסה עיקרית לעיר הבנויה כקיר בתים רציף המשמש מעין חומה.',
+            x: -90,
+            z: -6
+        });
+
+        createColumbarium({
+            name: 'שובך יונים צפוני',
+            info: 'מגדל יונים ששימש לדישון השדות באמצעות איסוף הגואנו החקלאי.',
+            x: -115,
+            z: -90
+        });
+
+        createColumbarium({
+            name: 'שובך יונים דרומי',
+            info: 'מגדל יונים נוסף בקצה השטח, חלק ממערכת החקלאות המדברית.',
+            x: 110,
+            z: 95
+        });
+
+        createCistern({ x: -40, z: 18 });
+        createCistern({ x: 16, z: 16 });
+        createCistern({ x: 32, z: -28 });
+
+        createAqueductChannel(new THREE.Vector3(90, 0.2, -80), new THREE.Vector3(22, 0.2, 30));
+        createAqueductChannel(new THREE.Vector3(22, 0.2, 30), new THREE.Vector3(0, 0.2, 42));
+
+        scatterRubble(220, 200, makeStoneMaterial(oldStone, 0xe3c7a3));
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let selected = null;
+
+        window.addEventListener('click', (e) => {
+            if (walkMode) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickable, true);
+
+            if (intersects.length > 0) {
+                const obj = intersects[0].object.parent;
+                if (obj.userData.name) {
+                    if (selected) selected.scale.set(1, 1, 1);
+                    selected = obj;
+                    selected.scale.set(1.06, 1.06, 1.06);
+
+                    document.getElementById('infoPanel').innerHTML =
+                        `<h3>${obj.userData.name}</h3><p>${obj.userData.info}</p>`;
+                }
+            }
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            if (walkMode) {
+                const delta = clock.getDelta();
+                const speed = 14;
+                const direction = new THREE.Vector3();
+                const front = new THREE.Vector3();
+                const right = new THREE.Vector3();
+
+                if (keyState.w) direction.z -= 1;
+                if (keyState.s) direction.z += 1;
+                if (keyState.a) direction.x -= 1;
+                if (keyState.d) direction.x += 1;
+
+                if (direction.lengthSq() > 0) {
+                    direction.normalize();
+                    camera.getWorldDirection(front);
+                    front.y = 0;
+                    front.normalize();
+                    right.crossVectors(front, camera.up).normalize();
+                    const move = new THREE.Vector3();
+                    move.addScaledVector(front, direction.z);
+                    move.addScaledVector(right, direction.x);
+                    move.multiplyScalar(speed * delta);
+                    camera.position.add(move);
+                    camera.position.y = 7;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
