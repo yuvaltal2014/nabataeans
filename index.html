@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הנבטאים - בוא לחקור תרבות עתיקה</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Text:ital@0;1&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #f4a460;
+            --dark-gold: #c4a062;
+            --light-gold: #f4d9a6;
+            --sand: #e8d7c3;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2416;
+            --accent: #d4a574;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Crimson Text', serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2d2416 100%);
+            color: var(--sand);
+            line-height: 1.8;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background with desert texture */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(244, 164, 96, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(196, 160, 98, 0.08) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212, 165, 116, 0.03) 10px, rgba(212, 165, 116, 0.03) 20px);
+            pointer-events: none;
+            z-index: 0;
+            animation: textureShift 30s ease-in-out infinite;
+        }
+
+        @keyframes textureShift {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HERO SECTION */
+        header {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 60px 20px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(15, 15, 15, 0.3) 100%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            animation: heroFadeIn 1.2s ease-out;
+        }
+
+        @keyframes heroFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3em, 8vw, 6em);
+            font-weight: 900;
+            color: var(--light-gold);
+            text-shadow: 4px 4px 20px rgba(0, 0, 0, 0.7);
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 4px 4px 20px rgba(0, 0, 0, 0.7); }
+            50% { text-shadow: 4px 4px 40px rgba(244, 164, 96, 0.3); }
+        }
+
+        .tagline {
+            font-size: clamp(1.2em, 3vw, 1.8em);
+            color: var(--accent);
+            font-style: italic;
+            margin-bottom: 40px;
+            font-family: 'Crimson Text', serif;
+            font-weight: 300;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1em;
+            color: var(--sand);
+            max-width: 600px;
+            margin: 0 auto 60px;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+            color: var(--dark-bg);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1em;
+            border-radius: 3px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(244, 164, 96, 0.3);
+            animation: fadeInUp 1s ease-out 0.9s both;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 45px rgba(244, 164, 96, 0.5);
+        }
+
+        /* ASSETS GRID */
+        .assets-section {
+            padding: 120px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2em, 5vw, 3.5em);
+            color: var(--light-gold);
+            text-align: center;
+            margin-bottom: 80px;
+            position: relative;
+            padding-bottom: 30px;
+            animation: titleAppear 1s ease-out;
+        }
+
+        @keyframes titleAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            box-shadow: 0 0 30px rgba(244, 164, 96, 0.4);
+        }
+
+        .assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .asset-card {
+            background: linear-gradient(135deg, rgba(45, 36, 22, 0.95) 0%, rgba(30, 25, 15, 0.9) 100%);
+            border: 2px solid var(--dark-gold);
+            overflow: hidden;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: cardSlideIn 0.8s ease-out backwards;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            group: true;
+        }
+
+        .asset-card:nth-child(1) { animation-delay: 0.1s; }
+        .asset-card:nth-child(2) { animation-delay: 0.2s; }
+        .asset-card:nth-child(3) { animation-delay: 0.3s; }
+        .asset-card:nth-child(4) { animation-delay: 0.4s; }
+        .asset-card:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .asset-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(244, 164, 96, 0.15), transparent);
+            transition: right 0.6s ease;
+            pointer-events: none;
+        }
+
+        .asset-card:hover::before {
+            right: 100%;
+        }
+
+        .asset-card:hover {
+            transform: translateY(-15px) scale(1.03);
+            border-color: var(--gold);
+            box-shadow: 0 25px 60px rgba(244, 164, 96, 0.25);
+        }
+
+        .asset-image {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(135deg, var(--dark-gold) 0%, var(--gold) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            color: rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .asset-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .asset-content {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .asset-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5em;
+            color: var(--light-gold);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .asset-description {
+            font-size: 0.95em;
+            color: var(--sand);
+            margin-bottom: 20px;
+            flex: 1;
+            opacity: 0.9;
+        }
+
+        .asset-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(244, 164, 96, 0.15);
+            color: var(--light-gold);
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid var(--dark-gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        .asset-link:hover {
+            background: var(--gold);
+            color: var(--dark-bg);
+            transform: translateX(-5px);
+        }
+
+        /* POSTER SHOWCASE */
+        .poster-section {
+            padding: 80px 20px;
+            background: linear-gradient(180deg, rgba(45, 36, 22, 0.5) 0%, transparent 100%);
+            position: relative;
+            z-index: 2;
+        }
+
+        .poster-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .poster-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2em;
+            color: var(--light-gold);
+            margin-bottom: 30px;
+        }
+
+        .poster-image {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 8px solid var(--dark-gold);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            transition: transform 0.4s ease;
+            animation: posterFade 1s ease-out;
+        }
+
+        @keyframes posterFade {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .poster-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 2px solid var(--dark-gold);
+            color: var(--accent);
+            font-size: 0.95em;
+            position: relative;
+            z-index: 2;
+            background: rgba(26, 26, 26, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        footer p {
+            margin-bottom: 10px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+                letter-spacing: 2px;
+            }
+
+            .tagline {
+                font-size: 1.2em;
+            }
+
+            .assets-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .section-title {
+                font-size: 1.8em;
+                margin-bottom: 50px;
+            }
+
+            .asset-image {
+                height: 200px;
+                font-size: 3em;
+            }
+
+            .asset-content {
+                padding: 20px;
+            }
+        }
+
+        /* SCROLL REVEAL */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        .scroll-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- HERO SECTION -->
+    <header>
+        <div class="hero-content">
+            <h1>הנבטאים</h1>
+            <p class="tagline">סוחרי המדבר ובונים הערים הנושמות</p>
+            <p class="hero-subtitle">בואו לחקור תרבות עתיקה מופלאה דרך אתרים אינטראקטיביים, תמונות ומודלים תלת-ממדיים</p>
+            <a href="#assets" class="cta-button">התחל בחקר</a>
+        </div>
+    </header>
+
+    <!-- ASSETS SECTION -->
+    <section id="assets" class="assets-section">
+        <div class="container">
+            <h2 class="section-title scroll-reveal">בחר את דרכך</h2>
+            
+            <div class="assets-grid">
+                <!-- 1-PAGER -->
+                <div class="asset-card scroll-reveal">
+                    <div class="asset-image">📜</div>
+                    <div class="asset-content">
+                        <h3 class="asset-title">עלון תרבותי</h3>
+                        <p class="asset-description">סיכום מקיף על ההיסטוריה, התרבות והערים הנבטאיות בנגב. מושלם להבנה מהירה של העם העתיק הזה.</p>
+                        <a href="1pager-nabataeans.html" class="asset-link">קרא את העלון →</a>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE WEBSITE -->
+                <div class="asset-card scroll-reveal">
+                    <div class="asset-image">🗺️</div>
+                    <div class="asset-content">
+                        <h3 class="asset-title">אתר אינטראקטיבי</h3>
+                        <p class="asset-description">צלול לעומק עולם הנבטאים עם עובדות מרתקות, מידע על שלוש הערים הנבטאיות ומודל תלת-ממדי של שבטה.</p>
+                        <a href="interactive-website.html" class="asset-link">כנס לאתר →</a>
+                    </div>
+                </div>
+
+                <!-- POSTCARD -->
+                <div class="asset-card scroll-reveal">
+                    <div class="asset-image">🐫</div>
+                    <div class="asset-content">
+                        <h3 class="asset-title">גלויה מעבדת</h3>
+                        <p class="asset-description">גלויה קלאסית מעבדת העתיקה עם תמונה של הערים הנבטאיות וברכה אישית מהמדבר.</p>
+                        <a href="postcard-avdat.html" class="asset-link">ראה את הגלויה →</a>
+                    </div>
+                </div>
+
+                <!-- 3D MODEL -->
+                <div class="asset-card scroll-reveal">
+                    <div class="asset-image">🏛️</div>
+                    <div class="asset-content">
+                        <h3 class="asset-title">מודל תלת-ממדי</h3>
+                        <p class="asset-description">שחזור אינטראקטיבי של עיר שבטה הביזנטית. סובבו, זומו והליכו בעיר כאילו אתם שם.</p>
+                        <a href="shivta-3d-model.html" class="asset-link">חקור את שבטה →</a>
+                    </div>
+                </div>
+
+                <!-- POSTER -->
+                <div class="asset-card scroll-reveal">
+                    <div class="asset-image">🎨</div>
+                    <div class="asset-content">
+                        <h3 class="asset-title">פוסטר אמנותי</h3>
+                        <p class="asset-description">עיצוב אמנותי עדכני המתחבר למורשת הנבטאית. תמונה ויזואלית מדהימה לתערוכה או הבית.</p>
+                        <a href="#poster" class="asset-link">ראה את הפוסטר ↓</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- POSTER SHOWCASE -->
+    <section id="poster" class="poster-section">
+        <div class="poster-container">
+            <h2 class="poster-title scroll-reveal">פוסטר אמנותי</h2>
+            <img src="images/Yuval - Nabataeans.png" alt="הנבטאים - פוסטר אמנותי" class="poster-image scroll-reveal">
+            <p style="margin-top: 30px; color: var(--accent); font-size: 0.95em;">עיצוב אמנותי המשדר את הגדולה והיופי של תרבות הנבטאים העתיקה</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>🏜️ מורשת עולמית של אונסקו - ערי הנגב הנבטאיות 🏜️</p>
+        <p style="opacity: 0.7; margin-top: 12px;">פרויקט ומורות היסטורי של יובל טל | 2026</p>
+    </footer>
+
+    <script>
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.scroll-reveal');
+        
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        revealElements.forEach(element => {
+            observer.observe(element);
+        });
+
+        // Smooth scroll for CTA button
+        document.querySelector('.cta-button').addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.querySelector('#assets');
+            target.scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
